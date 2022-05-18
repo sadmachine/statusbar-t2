@@ -1,49 +1,36 @@
 #pragma once
 #include <ncurses.h>
 #include <string>
+#include <vector>
+#include "StatusBarPart.hpp"
 
 class StatusBar
 {
     WINDOW *_parent;
-    std::string _text;
-    attr_t _attributes;
+    std::vector<StatusBarPart> _parts;
 
 public:
-    StatusBar(WINDOW *parent = stdscr)
+    StatusBar(int num_parts, WINDOW *parent = stdscr)
     {
         _parent = parent;
-        _text = "";
+        _parts = std::vector<StatusBarPart>(num_parts);
     }
 
-    std::string getText()
+    void setText(int part_num, std::string msg, attr_t attributes = -1)
     {
-        return _text;
-    }
-
-    void setText(std::string text, attr_t attributes = 0)
-    {
-        _text = text;
-        if (attributes != 0)
-        {
-            _attributes = attributes;
-        }
-    }
-
-    attr_t getAttributes()
-    {
-        return _attributes;
-    }
-
-    void setAttributes(attr_t attributes)
-    {
-        _attributes = attributes;
+        _parts[part_num].setText(msg, attributes);
     }
 
     void draw()
     {
         int output_row = _parent->_maxy - 1;
-        attron(_attributes);
-        mvwprintw(_parent, output_row, 0, getText().c_str());
-        attroff(_attributes);
+        wmove(_parent, output_row, 0);
+        for (int i = 0; i < _parts.size(); i++)
+        {
+            StatusBarPart part = _parts[i];
+            attron(part.getAttributes());
+            wprintw(_parent, part.getText().c_str());
+            attroff(part.getAttributes());
+        }
     }
 };
